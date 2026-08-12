@@ -1,0 +1,38 @@
+# macOS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.tmp
+*.log
+
+# Nix build outputs and local development
+result
+result-*
+.direnv/
+.worktrees/
+
+# Runtime state must remain outside Git
+.local-state/
+state/
+audits/
+backups/
+activations/
+*.receipt
+
+# Secrets, authentication and private environment
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.token
+**/auth.json
+**/credentials.json
+secrets/
+
+# Local agent and specification harness state
+.agents/
+.specify/
+specs/
