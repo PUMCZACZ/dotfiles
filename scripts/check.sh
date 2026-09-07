@@ -112,6 +112,7 @@ check_nvim_lua() {
       luac -p "$check_lua_file" || return 1
     done
   lua tests/nvim-lsp-fixture.lua
+  lua tests/nvim-lazy-lock-fixture.lua
 }
 
 check_wezterm_runtime() {

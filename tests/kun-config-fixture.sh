@@ -26,7 +26,7 @@ assert_contains home/wezterm/wezterm.lua 'wezterm.on("window-focus-changed"'
 
 assert_file home/nvim/init.lua
 assert_file home/nvim/lazy-lock.json
-assert_contains home/nvim/lua/plugin.lua "require('lazy').setup('plugins')"
+assert_file home/nvim/lua/plugin.lua
 assert_contains home/nvim/lua/plugins/colorscheme.lua "dark_variant = 'moon'"
 assert_contains home/nvim/lua/plugins/navigation.lua "'folke/snacks.nvim'"
 assert_contains home/nvim/lua/plugins/git.lua "'NeogitOrg/neogit'"
