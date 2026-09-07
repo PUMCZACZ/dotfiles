@@ -1,5 +1,15 @@
 return {
   {
+    'saghen/blink.cmp',
+    version = '1.*',
+    opts = {
+      keymap = { preset = 'super-tab' },
+      sources = {
+        default = { 'lsp', 'path', 'snippets', 'buffer' },
+      },
+    },
+  },
+  {
     'mason-org/mason-lspconfig.nvim',
     dependencies = {
       { 'mason-org/mason.nvim', opts = {} },

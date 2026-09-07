@@ -1,11 +1,38 @@
 local specs = dofile('home/nvim/lua/plugins/lsp.lua')
 
+local blink_spec
 local lsp_spec
 for _, spec in ipairs(specs) do
+  if spec[1] == 'saghen/blink.cmp' then
+    blink_spec = spec
+  end
   if spec[1] == 'mason-org/mason-lspconfig.nvim' then
     lsp_spec = spec
-    break
   end
+end
+
+assert(blink_spec, 'brak konfiguracji blink.cmp')
+assert(blink_spec.version == '1.*', 'blink.cmp nie używa stabilnej głównej wersji')
+assert(blink_spec.opts.keymap.preset == 'super-tab', 'blink.cmp nie używa skrótów podobnych do IDE')
+
+local expected_sources = {
+  buffer = true,
+  lsp = true,
+  path = true,
+  snippets = true,
+}
+
+local completion_sources = {}
+for _, source in ipairs(blink_spec.opts.sources.default or {}) do
+  completion_sources[source] = true
+end
+
+for source in pairs(expected_sources) do
+  assert(completion_sources[source], 'brak źródła completion: ' .. source)
+end
+
+for source in pairs(completion_sources) do
+  assert(expected_sources[source], 'nieoczekiwane źródło completion: ' .. source)
 end
 
 assert(lsp_spec, 'brak konfiguracji mason-lspconfig.nvim')
