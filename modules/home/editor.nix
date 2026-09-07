@@ -19,6 +19,7 @@
     ".config/nvim/lua/plugin.lua".source = ../../home/nvim/lua/plugin.lua;
     ".config/nvim/lua/plugins/colorscheme.lua".source = ../../home/nvim/lua/plugins/colorscheme.lua;
     ".config/nvim/lua/plugins/git.lua".source = ../../home/nvim/lua/plugins/git.lua;
+    ".config/nvim/lua/plugins/lsp.lua".source = ../../home/nvim/lua/plugins/lsp.lua;
     ".config/nvim/lua/plugins/navigation.lua".source = ../../home/nvim/lua/plugins/navigation.lua;
     ".config/nvim/lua/plugins/ui.lua".source = ../../home/nvim/lua/plugins/ui.lua;
   };

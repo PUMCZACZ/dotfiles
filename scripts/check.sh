@@ -111,6 +111,7 @@ check_nvim_lua() {
     while IFS= read -r -d '' check_lua_file; do
       luac -p "$check_lua_file" || return 1
     done
+  lua tests/nvim-lsp-fixture.lua
 }
 
 check_wezterm_runtime() {

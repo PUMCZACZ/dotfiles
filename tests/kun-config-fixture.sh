@@ -30,11 +30,13 @@ assert_contains home/nvim/lua/plugin.lua "require('lazy').setup('plugins')"
 assert_contains home/nvim/lua/plugins/colorscheme.lua "dark_variant = 'moon'"
 assert_contains home/nvim/lua/plugins/navigation.lua "'folke/snacks.nvim'"
 assert_contains home/nvim/lua/plugins/git.lua "'NeogitOrg/neogit'"
+assert_file home/nvim/lua/plugins/lsp.lua
 
 assert_file modules/home/terminal.nix
 assert_contains modules/home/terminal.nix 'home.file.".config/wezterm/wezterm.lua"'
 assert_file modules/home/editor.nix
 assert_contains modules/home/editor.nix 'neovim'
 assert_contains modules/home/editor.nix 'EDITOR = "nvim";'
+assert_contains modules/home/editor.nix '".config/nvim/lua/plugins/lsp.lua".source = ../../home/nvim/lua/plugins/lsp.lua;'
 
 printf 'PASS konfiguracja WezTerm i Neovim spełnia kontrakt\n'
