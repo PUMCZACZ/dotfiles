@@ -4,6 +4,18 @@ return {
     version = '1.*',
     opts = {
       keymap = { preset = 'super-tab' },
+      completion = {
+        menu = {
+          draw = {
+            columns = {
+              { 'kind_icon' },
+              { 'label', 'label_description', gap = 1 },
+              { 'kind' },
+              { 'source_name' },
+            },
+          },
+        },
+      },
       sources = {
         default = { 'lsp', 'path', 'snippets', 'buffer' },
       },

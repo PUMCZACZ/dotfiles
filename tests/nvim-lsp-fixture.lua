@@ -35,6 +35,21 @@ for source in pairs(completion_sources) do
   assert(expected_sources[source], 'nieoczekiwane źródło completion: ' .. source)
 end
 
+local menu_components = {}
+local completion = blink_spec.opts.completion or {}
+local menu = completion.menu or {}
+local draw = menu.draw or {}
+for _, column in ipairs(draw.columns or {}) do
+  for _, component in ipairs(column) do
+    if type(component) == 'string' then
+      menu_components[component] = true
+    end
+  end
+end
+
+assert(menu_components.kind, 'menu completion nie rozróżnia tekstowo klas, metod i funkcji')
+assert(menu_components.source_name, 'menu completion nie pokazuje źródła LSP/Buffer/Path/Snippets')
+
 assert(lsp_spec, 'brak konfiguracji mason-lspconfig.nvim')
 
 local dependencies = {}
