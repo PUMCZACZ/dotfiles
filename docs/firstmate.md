@@ -11,6 +11,7 @@ editing `packages/agents/` and validating the resulting diff.
 
 | Component | Version/revision | Owner and official source | Integrity lock | License |
 |---|---|---|---|---|
+| agent-browser | 0.27.0 | Nix; nixpkgs `agent-browser` | `flake.lock` | Apache-2.0 |
 | Pi | 0.84.1 | Nix; `earendil-works/pi` release | `sha256-aDyE…GEh0=` | MIT |
 | Firstmate | `76355e20b4f44d968ca43c14e1bb21c100ac90d7` | Nix; `kunchenguid/firstmate` | `sha256-2WC0…P1A=` | MIT |
 | Herdr | 0.8.0, protocol 19 artifact | Nix; `herdrdev/herdr` release | `sha256-1Tqf…gXg=` | Apache-2.0 |
@@ -38,10 +39,15 @@ an audit index, not a second lock file.
 | Herdr config, socket, sessions and logs | Herdr/user | `~/.config/herdr` | preserved |
 | GitHub auth and Keychain entries | `gh`/user | local config and Keychain | preserved |
 | Chrome profiles and process state | Chrome/user | application-owned paths | preserved |
+| agent-browser Chrome for Testing | agent-browser/user | user cache | preserved |
 
 Home Manager owns only `~/.pi/agent/AGENTS.md` and
 `~/.pi/agent/extensions/work-modes.ts`; it does not adopt the rest of `~/.pi`.
 The profile does not copy Firstmate or its state into an application project.
+The managed browser workflow instructions apply to regular `pi`. `firstmate-pi`
+also exposes the `agent-browser` CLI in its process `PATH`, but disables Pi
+context files, so that workflow is not preloaded there. The CLI prints its
+version-matched instructions with `agent-browser skills get core`.
 
 ## Launch
 
@@ -55,7 +61,7 @@ firstmate-pi
 1. resolves a writable `FM_HOME` outside `/nix/store`;
 2. sets `FM_ROOT_OVERRIDE` to the pinned snapshot;
 3. fixes `FM_BACKEND=herdr` and `FM_PI_HARNESS=pi`;
-4. supplies Git, `gh`, jq, Python, Node 24 and agent CLIs only in its process
+4. supplies Git, `gh`, jq, Python, Node 24, `agent-browser` and other agent CLIs only in its process
    closure, leaving the normal NVM shell unchanged;
 5. points `CHROME_DEVTOOLS_AXI_MCP_PATH` at the built 1.7.0 JavaScript entry;
 6. changes directory to the immutable Firstmate root;

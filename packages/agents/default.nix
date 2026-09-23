@@ -285,6 +285,7 @@ let
     runtimeInputs = [
       pi
       herdr
+      pkgs.agent-browser
       treehouse
       noMistakes
       ghAxi
@@ -357,7 +358,7 @@ PY
         exit 3
       fi
 
-      for tool in pi herdr treehouse no-mistakes gh-axi chrome-devtools-axi lavish-axi tasks-axi quota-axi git gh jq python3 node; do
+      for tool in pi agent-browser herdr treehouse no-mistakes gh-axi chrome-devtools-axi lavish-axi tasks-axi quota-axi git gh jq python3 node; do
         if ! command -v "$tool" >/dev/null 2>&1; then
           printf 'firstmate-pi: required tool is unavailable: %s\n' "$tool" >&2
           exit 3
@@ -398,6 +399,7 @@ in
     treehouse
     ;
   no-mistakes = noMistakes;
+  agent-browser = pkgs.agent-browser;
   gh-axi = ghAxi;
   chrome-devtools-axi = chromeDevtoolsAxi;
   lavish-axi = lavishAxi;

@@ -17,6 +17,7 @@ let
     [ "tasks-axi" "0.2.5" ]
     [ "quota-axi" "0.1.21" ]
     [ "chrome-devtools-mcp" "1.7.0" ]
+    [ "agent-browser" "0.27.0" ]
     [ "firstmate-pi" "76355e20b4f44d968ca43c14e1bb21c100ac90d7" ]
   ];
   desiredInventory = lib.concatLines (map (component: lib.concatStringsSep "\t" component) desiredComponents);
@@ -42,6 +43,7 @@ in
       pkgs.git
       pkgs.gh
       agentPackages.pi
+      agentPackages.agent-browser
       agentPackages.herdr
       agentPackages.treehouse
       agentPackages.no-mistakes

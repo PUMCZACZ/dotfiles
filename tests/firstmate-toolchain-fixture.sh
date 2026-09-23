@@ -48,6 +48,7 @@ lavish-axi	0.1.50
 tasks-axi	0.2.5
 quota-axi	0.1.21
 chrome-devtools-mcp	1.7.0
+agent-browser	0.27.0
 firstmate-pi	76355e20b4f44d968ca43c14e1bb21c100ac90d7'
 
 inventory=$(nix eval --impure --raw --no-update-lock-file --no-write-lock-file --expr '
@@ -80,7 +81,7 @@ grep -Fq 'fm-primary-turnend-guard.ts' "$flake_root/packages/agents/default.nix"
 grep -Fq 'fm-primary-pi-watch.ts' "$flake_root/packages/agents/default.nix" \
   || fail 'Firstmate watcher is absent from launcher allowlist'
 
-for attr in pi firstmate herdr treehouse no-mistakes gh-axi chrome-devtools-axi lavish-axi tasks-axi quota-axi chrome-devtools-mcp firstmate-pi; do
+for attr in pi firstmate herdr treehouse no-mistakes gh-axi chrome-devtools-axi lavish-axi tasks-axi quota-axi chrome-devtools-mcp agent-browser firstmate-pi; do
   out=$(build_package "$attr") || fail "package failed to build: $attr"
   [ -d "$out" ] || fail "package output is not a directory: $attr"
 done
