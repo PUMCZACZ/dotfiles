@@ -43,11 +43,11 @@ let
 
   pi = pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
     pname = "pi-coding-agent";
-    version = "0.84.1";
+    version = "0.87.1";
 
     src = pkgs.fetchurl {
       url = "https://github.com/earendil-works/pi/releases/download/v${finalAttrs.version}/pi-darwin-arm64.tar.gz";
-      hash = "sha256-aDyEJh9AuHC0p8zxgaSK1uzXGFOwES0bthdTlTDGEh0=";
+      hash = "sha256-T40oi3jJdo06Ssb2HwbNNDlLgqwX1bQtHkSkN63UAbc=";
     };
 
     nativeBuildInputs = [ pkgs.makeWrapper ];
@@ -284,8 +284,8 @@ let
     name = "firstmate-pi";
     runtimeInputs = [
       pi
-      herdr
       pkgs.agent-browser
+      herdr
       treehouse
       noMistakes
       ghAxi
@@ -398,8 +398,8 @@ in
     herdr
     treehouse
     ;
-  no-mistakes = noMistakes;
   agent-browser = pkgs.agent-browser;
+  no-mistakes = noMistakes;
   gh-axi = ghAxi;
   chrome-devtools-axi = chromeDevtoolsAxi;
   lavish-axi = lavishAxi;

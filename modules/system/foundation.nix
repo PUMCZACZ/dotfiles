@@ -27,7 +27,10 @@ in
   config = {
     # Determinate owns the Nix daemon and nix.conf. nix-darwin owns generations.
     nix.enable = false;
-    nixpkgs.hostPlatform = lib.mkDefault cfg.platform;
+    nixpkgs = {
+      hostPlatform = lib.mkDefault cfg.platform;
+      config.allowUnfreePredicate = pkg: lib.getName pkg == "ngrok";
+    };
 
     # Keep macOS' existing zsh startup files. nix-darwin enables its zsh module
     # by default, which would replace path_helper and hide /etc/paths.d entries.

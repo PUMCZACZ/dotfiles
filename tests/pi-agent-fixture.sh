@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2016 # Nix expressions intentionally splice shell values between quoted segments.
 set -Eeuo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
@@ -50,27 +51,32 @@ grep -Fq "prefer quality, simplicity, robustness, scalability, and long-term mai
 grep -Fq "always start by reproducing the bug in an end-to-end setting" "$agents_path" \
   || fail "globalny plik AGENTS.md PI nie zawiera zasad reprodukcji błędów"
 
-managed_work_modes_path=$(nix eval --impure --raw --no-update-lock-file --no-write-lock-file \
+managed_auto_compaction_path=$(nix eval --impure --raw --no-update-lock-file --no-write-lock-file \
   --expr '
     let
       flake = builtins.getFlake "path:'"$repo_root"'";
       profileUser = builtins.getEnv "DOTFILES_USER";
-      extension = flake.darwinConfigurations.macos.config.home-manager.users.${profileUser}.home.file.".pi/agent/extensions/work-modes.ts";
+      extension = flake.darwinConfigurations.macos.config.home-manager.users.${profileUser}.home.file.".pi/agent/extensions/auto-compaction.ts";
     in
       toString extension.source
-  ') || fail "Home Manager nie udostępnia rozszerzenia trybów pracy PI"
+  ') || fail "Home Manager nie udostępnia rozszerzenia automatycznej kompaktacji PI"
 
-case "$managed_work_modes_path" in
-  */home/pi/extensions/work-modes.ts) ;;
-  *) fail "Home Manager wskazuje nieprawidłowe źródło rozszerzenia trybów pracy PI" ;;
+case "$managed_auto_compaction_path" in
+  */home/pi/extensions/auto-compaction.ts) ;;
+  *) fail "Home Manager wskazuje nieprawidłowe źródło rozszerzenia automatycznej kompaktacji PI" ;;
 esac
 
-work_modes_path="$repo_root/home/pi/extensions/work-modes.ts"
-[ -f "$work_modes_path" ] || fail "źródło rozszerzenia trybów pracy PI nie istnieje"
+auto_compaction_path="$repo_root/home/pi/extensions/auto-compaction.ts"
+[ -f "$auto_compaction_path" ] || fail "źródło rozszerzenia automatycznej kompaktacji PI nie istnieje"
+grep -Fq "COMPACTION_THRESHOLD_PERCENT = 80" "$auto_compaction_path" \
+  || fail "rozszerzenie automatycznej kompaktacji PI nie używa progu 80%"
+grep -Fq "detailed, standalone handoff checkpoint" "$auto_compaction_path" \
+  || fail "rozszerzenie automatycznej kompaktacji PI nie wymaga kompletnego podsumowania przekazania"
+
 PI_OFFLINE=1 "$pi_path/bin/pi" \
-  --no-extensions --extension "$work_modes_path" \
+  --no-extensions --extension "$auto_compaction_path" \
   --no-skills --no-prompt-templates --no-themes --no-context-files \
-  --work-mode research --list-models >/dev/null || fail "PI nie ładuje rozszerzenia trybów pracy"
+  --list-models >/dev/null || fail "PI nie ładuje zarządzanych rozszerzeń"
 
 firstmate_launcher=$(nix build --impure --no-link --print-out-paths \
   --no-update-lock-file --no-write-lock-file \

@@ -6,7 +6,7 @@
 let
   agentPackages = import ../../packages/agents { inherit pkgs; };
   desiredComponents = [
-    [ "pi-coding-agent" "0.84.1" ]
+    [ "pi-coding-agent" "0.87.1" ]
     [ "firstmate-snapshot" "76355e20b4f44d968ca43c14e1bb21c100ac90d7" ]
     [ "herdr" "0.8.0" ]
     [ "treehouse" "2.1.1" ]
@@ -57,7 +57,8 @@ in
 
     home.file = {
       ".pi/agent/AGENTS.md".source = ../../home/pi/AGENTS.md;
-      ".pi/agent/extensions/work-modes.ts".source = ../../home/pi/extensions/work-modes.ts;
+      ".pi/agent/extensions/auto-compaction.ts".source = ../../home/pi/extensions/auto-compaction.ts;
+      ".pi/agent/extensions/web-search.ts".source = ../../home/pi/extensions/web-search.ts;
     };
   };
 }
