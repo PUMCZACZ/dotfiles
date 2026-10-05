@@ -37,9 +37,11 @@ build_package() {
     "$flake_ref#$1"
 }
 
-expected='pi-coding-agent	0.87.1
+expected='pi-coding-agent	1.0.2
 firstmate-snapshot	76355e20b4f44d968ca43c14e1bb21c100ac90d7
 herdr	0.8.0
+pi-observational-memory	78a1efcfdd46332253fb289724f05b26dfc7769e
+pi-herdr-interactive-subagents	3.7.2-herdr.1
 treehouse	2.1.1
 no-mistakes	1.46.0
 gh-axi	0.1.30
@@ -51,6 +53,7 @@ chrome-devtools-mcp	1.7.0
 agent-browser	0.27.0
 firstmate-pi	76355e20b4f44d968ca43c14e1bb21c100ac90d7'
 
+# shellcheck disable=SC2016 # Nix ${profileUser} interpolation must remain literal.
 inventory=$(nix eval --impure --raw --no-update-lock-file --no-write-lock-file --expr '
   let
     flake = builtins.getFlake "'"$flake_ref"'";
@@ -101,6 +104,7 @@ launcher_output=$(HOME="$fixture_root/user" XDG_DATA_HOME="$fixture_root/data" F
   || fail "offline launcher smoke failed: $launcher_output"
 [ -d "$private_home" ] || fail 'launcher did not preserve the external FM_HOME'
 
+# shellcheck disable=SC2016 # Match the launcher's literal $PATH, not the current shell value.
 runtime_path=$(sed -n 's/^export PATH="\(.*\):\$PATH"$/\1/p' "$launcher_path/bin/firstmate-pi")
 [ -n "$runtime_path" ] || fail 'launcher does not expose a pinned closure PATH'
 bootstrap_output=$(HOME="$fixture_root/user" FM_HOME="$private_home" \

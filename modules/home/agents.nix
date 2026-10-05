@@ -6,9 +6,11 @@
 let
   agentPackages = import ../../packages/agents { inherit pkgs; };
   desiredComponents = [
-    [ "pi-coding-agent" "0.87.1" ]
+    [ "pi-coding-agent" "1.0.2" ]
     [ "firstmate-snapshot" "76355e20b4f44d968ca43c14e1bb21c100ac90d7" ]
     [ "herdr" "0.8.0" ]
+    [ "pi-observational-memory" "78a1efcfdd46332253fb289724f05b26dfc7769e" ]
+    [ "pi-herdr-interactive-subagents" "3.7.2-herdr.1" ]
     [ "treehouse" "2.1.1" ]
     [ "no-mistakes" "1.46.0" ]
     [ "gh-axi" "0.1.30" ]
@@ -45,6 +47,7 @@ in
       agentPackages.pi
       agentPackages.agent-browser
       agentPackages.herdr
+      agentPackages.observationalMemory
       agentPackages.treehouse
       agentPackages.no-mistakes
       agentPackages.gh-axi
@@ -57,8 +60,11 @@ in
 
     home.file = {
       ".pi/agent/AGENTS.md".source = ../../home/pi/AGENTS.md;
-      ".pi/agent/extensions/auto-compaction.ts".source = ../../home/pi/extensions/auto-compaction.ts;
       ".pi/agent/extensions/web-search.ts".source = ../../home/pi/extensions/web-search.ts;
+      ".pi/agent/extensions/observational-memory".source =
+        "${agentPackages.observationalMemory}/share/pi-observational-memory";
+      ".pi/agent/extensions/herdr-interactive-subagents".source =
+        "${agentPackages.interactiveSubagents}/share/pi-herdr-interactive-subagents/pi-extension/subagents";
     };
   };
 }

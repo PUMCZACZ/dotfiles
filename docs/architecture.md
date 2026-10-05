@@ -202,6 +202,7 @@ NVM, pyenv, PHP, Composer, Android SDK, STM32CubeMX i profile Claude są przenos
 - Nie otrzymuje usługi uruchamianej przy logowaniu.
 - Używa standardowego prefixu `Ctrl+B` tylko po sprawdzeniu konfliktu z tmux.
 - Pierwszy smoke test obejmuje osobne panele z Codex i Pi.
+- Zwykły Pi ma przypięte [interaktywne subagenty](herdr-interactive-subagents.md) w panelach Herdr; profil Firstmate pozostaje odizolowany.
 - Dane sesji Herdr pozostają lokalne i nie trafiają do Git.
 
 ## 11. Neovim

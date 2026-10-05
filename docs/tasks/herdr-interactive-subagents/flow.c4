@@ -1,0 +1,46 @@
+specification {
+  element person
+  element component
+  element store
+  relationship uses
+  relationship starts
+  relationship sends
+  relationship persists
+  relationship reports
+}
+
+model {
+  operator = person 'Operator'
+  parent = component 'Pi parent'
+  extension = component 'Herdr interactive subagents extension'
+  herdr = component 'Herdr session / pane API'
+  child = component 'Pi child process'
+  registry = store 'Pi name registry and sandbox snapshot'
+  transcript = store 'Child Pi session JSONL'
+
+  operator -[uses]-> parent
+  parent -[uses]-> herdr 'runs in a managed pane'
+  parent -[uses]-> extension
+  extension -[starts]-> herdr
+  herdr -[starts]-> child
+  extension -[persists]-> registry
+  child -[persists]-> transcript
+  extension -[sends]-> child 'steer / answer, or restart from JSONL'
+  child -[reports]-> extension 'question / completion'
+  extension -[reports]-> parent
+}
+
+views {
+  // Verified pre-activation: ordinary Pi is already recognized inside Herdr.
+  view current {
+    include operator, parent, herdr
+  }
+  // Target after Home Manager activation: interactive Pi/Herdr port.
+  view business {
+    include operator, parent, extension, herdr, child
+  }
+  // Target details: Herdr topology and Pi's independent durable JSONL.
+  view technical {
+    include *
+  }
+}

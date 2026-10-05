@@ -159,6 +159,7 @@ for required_nix_tool in nvim rg fd; do
 done
 
 firstmate_inventory=''
+# shellcheck disable=SC2016 # Nix ${profileUser} interpolation must remain literal.
 if dotfiles_load_nix && firstmate_inventory=$(nix eval --impure --raw --no-write-lock-file --expr '
   let
     flake = builtins.getFlake "path:'"$DOTFILES_REPO_ROOT"'";
@@ -225,6 +226,7 @@ firstmate_launcher=$(doctor_command_path firstmate-pi || true)
 if [ -n "$firstmate_launcher" ] && doctor_nix_owned_path "$firstmate_launcher"; then
   launcher_root=$(sed -n 's/^[[:space:]]*fm_root=\([^[:space:]]*\)$/\1/p' "$firstmate_launcher" | head -1)
   launcher_mcp=$(sed -n 's/^[[:space:]]*export CHROME_DEVTOOLS_AXI_MCP_PATH=\([^[:space:]]*\)$/\1/p' "$firstmate_launcher" | head -1)
+  # shellcheck disable=SC2016 # Match the launcher's literal $PATH, not the current shell value.
   launcher_runtime_path=$(sed -n 's/^export PATH="\(.*\):\$PATH"$/\1/p' "$firstmate_launcher" | head -1)
   if [ -d "$launcher_root" ] && [ -f "$launcher_root/.pi/extensions/fm-calm.ts" ] && \
     [ -f "$launcher_root/.pi/extensions/fm-primary-turnend-guard.ts" ] && \

@@ -12,9 +12,11 @@ editing `packages/agents/` and validating the resulting diff.
 | Component | Version/revision | Owner and official source | Integrity lock | License |
 |---|---|---|---|---|
 | agent-browser | 0.27.0 | Nix; nixpkgs `agent-browser` | `flake.lock` | Apache-2.0 |
-| Pi | 0.87.1 | Nix; `earendil-works/pi` release | `sha256-T40o…UAbc=` | MIT |
+| Pi | 1.0.2 | Nix; `earendil-works/pi` release | `sha256-wvA1…o7s=` | MIT |
+| Observational memory (regular Pi only) | upstream `78a1efc` | Nix; `amosblomqvist/pi-observational-memory` + local startup/model defaults | `sha256-ieks…iW4=` | MIT |
 | Firstmate | `76355e20b4f44d968ca43c14e1bb21c100ac90d7` | Nix; `kunchenguid/firstmate` | `sha256-2WC0…P1A=` | MIT |
 | Herdr | 0.8.0, protocol 19 artifact | Nix; `herdrdev/herdr` release | `sha256-1Tqf…gXg=` | Apache-2.0 |
+| Herdr interactive subagents (regular Pi only) | 3.7.2-herdr.1, upstream `c3e8b53` | Nix; `amosblomqvist/pi-interactive-subagents` + local adapter | `sha256-CuHD…A2s=` | MIT |
 | Treehouse | 2.1.1 | Nix; `kunchenguid/treehouse` release | `sha256-3qvr…R9M=` | MIT |
 | no-mistakes | 1.46.0 | Nix; `kunchenguid/no-mistakes` release | `sha256-4dn4…LYg=` | MIT |
 | gh-axi | 0.1.30 | Nix; `kunchenguid/gh-axi` | source `sha256-E9Sa…v5c=`, pnpm `sha256-2vlp…2d0=` | MIT |
@@ -35,15 +37,20 @@ an audit index, not a second lock file.
 | Package declarations and launcher | this repository | `packages/agents/`, `modules/home/agents.nix` | restored |
 | Firstmate code and Pi extensions | Nix | immutable store paths | restored |
 | Firstmate data, config, projects and reports | Firstmate/user | `${XDG_DATA_HOME:-$HOME/.local/share}/firstmate` | preserved |
-| Pi auth, sessions and trust | Pi/user | `~/.pi/agent` except two named HM files | preserved |
+| Pi auth, sessions and trust | Pi/user | `~/.pi/agent` except HM-managed context/extensions below | preserved |
 | Herdr config, socket, sessions and logs | Herdr/user | `~/.config/herdr` | preserved |
 | GitHub auth and Keychain entries | `gh`/user | local config and Keychain | preserved |
 | Chrome profiles and process state | Chrome/user | application-owned paths | preserved |
 | agent-browser Chrome for Testing | agent-browser/user | user cache | preserved |
 
-Home Manager owns `~/.pi/agent/AGENTS.md` and the
-`auto-compaction.ts` and `web-search.ts` extensions; it does not adopt the rest
-of `~/.pi`.
+Home Manager owns `~/.pi/agent/AGENTS.md`, the `web-search.ts` extension,
+and the pinned `observational-memory/` and `herdr-interactive-subagents/`
+extensions for regular Pi. Observational memory replaces the previous
+`auto-compaction.ts` extension and is enabled by default in new sessions;
+`/om off` disables it for an individual session. Previously saved sessions
+without OM stay on Pi's original compaction until explicitly enabled with
+`/om on`, so existing history is not replaced by an empty memory. The rest of
+`~/.pi` remains user-owned.
 The profile does not copy Firstmate or its state into an application project.
 The managed browser workflow instructions apply to regular `pi`. `firstmate-pi`
 also exposes the `agent-browser` CLI in its process `PATH`, but disables Pi

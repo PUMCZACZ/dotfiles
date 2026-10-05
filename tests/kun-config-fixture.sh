@@ -23,6 +23,8 @@ assert_contains home/wezterm/wezterm.lua 'config.color_scheme = "rose-pine-moon"
 assert_contains home/wezterm/wezterm.lua 'config.font = wezterm.font("JetBrainsMono Nerd Font")'
 assert_contains home/wezterm/wezterm.lua 'config.font_size = 15.0'
 assert_contains home/wezterm/wezterm.lua 'wezterm.on("window-focus-changed"'
+assert_contains home/wezterm/wezterm.lua 'wezterm.on("open-uri"'
+assert_contains home/wezterm/wezterm.lua 'mods = "CTRL|SHIFT"'
 
 assert_file home/nvim/init.lua
 assert_file home/nvim/lazy-lock.json

@@ -1,0 +1,45 @@
+specification {
+  element person
+  element component
+  relationship uses
+  relationship sends
+  relationship opens
+  relationship reports
+}
+
+model {
+  user = person 'User'
+  pi = component 'Pi rendered file hyperlink'
+  wezterm = component 'WezTerm native link action'
+  systemOpener = component 'macOS default URL opener'
+  resolver = component 'Local-file handler (planned)'
+  herdr = component 'Originating Herdr pane / session cwd'
+  ide = component 'PhpStorm or Rider'
+  browser = component 'Browser for web links'
+  failure = component 'Visible missing-file / launch failure'
+
+  user -[uses]-> pi 'clicks a rendered link'
+  pi -[sends]-> wezterm 'OSC 8 URI'
+  wezterm -[uses]-> systemOpener 'current default behavior'
+  wezterm -[sends]-> resolver 'planned open-uri interception'
+  resolver -[uses]-> herdr 'relative target: shared visible cwd or zoomed pane; never tool cwd'
+  resolver -[opens]-> ide 'existing local file; project IDE selection'
+  resolver -[opens]-> browser 'web URI stays on default path'
+  resolver -[reports]-> failure 'different-project split / missing file / launch failure'
+  failure -[reports]-> user
+}
+
+views {
+  view current_verified {
+    title 'Verified current: link has no IDE routing'
+    include user, pi, wezterm, systemOpener
+  }
+  view business_planned {
+    title 'Planned business flow: click file, open project IDE'
+    include user, pi, wezterm, resolver, ide, failure
+  }
+  view technical_planned {
+    title 'Planned technical flow and failure boundary'
+    include user, pi, wezterm, resolver, herdr, ide, browser, failure
+  }
+}

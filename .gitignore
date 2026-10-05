@@ -14,6 +14,7 @@ result-*
 .worktrees/
 
 # Runtime state must remain outside Git
+.memory/
 .local-state/
 state/
 audits/

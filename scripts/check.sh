@@ -129,6 +129,7 @@ check_step shell-migration-fixture ./tests/shell-migration-fixture.sh
 check_step homebrew-plan-fixture ./tests/homebrew-plan-fixture.sh
 check_step profile-path-fixture ./tests/profile-path-fixture.sh
 check_step kun-config-fixture ./tests/kun-config-fixture.sh
+check_step wezterm-links-fixture nix develop --impure "path:$DOTFILES_REPO_ROOT" --command lua tests/wezterm-links-fixture.lua
 check_step pi-agent-fixture ./tests/pi-agent-fixture.sh
 check_step rebuild-fixture ./tests/rebuild-fixture.sh
 check_step gitleaks-tree nix develop --impure "path:$DOTFILES_REPO_ROOT" --command \

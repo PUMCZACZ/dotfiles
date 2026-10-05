@@ -43,11 +43,11 @@ let
 
   pi = pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
     pname = "pi-coding-agent";
-    version = "0.87.1";
+    version = "1.0.2";
 
     src = pkgs.fetchurl {
       url = "https://github.com/earendil-works/pi/releases/download/v${finalAttrs.version}/pi-darwin-arm64.tar.gz";
-      hash = "sha256-T40oi3jJdo06Ssb2HwbNNDlLgqwX1bQtHkSkN63UAbc=";
+      hash = "sha256-wvA16krbqHkW8AXJlRXjyRZ0sR0WunXZXQiB5Hgao7s=";
     };
 
     nativeBuildInputs = [ pkgs.makeWrapper ];
@@ -118,6 +118,121 @@ let
     description = "Terminal workspace and session backend for agents";
     homepage = "https://github.com/herdrdev/herdr";
     license = lib.licenses.asl20;
+  };
+
+  observationalMemory = pkgs.stdenvNoCC.mkDerivation {
+    pname = "pi-observational-memory";
+    version = "78a1efcfdd46332253fb289724f05b26dfc7769e";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "amosblomqvist";
+      repo = "pi-observational-memory";
+      rev = "78a1efcfdd46332253fb289724f05b26dfc7769e";
+      hash = "sha256-iekslijEh0l1RQmrfYqtKIf2G2redwSlHtficqTNiW4=";
+    };
+
+    installPhase = ''
+      runHook preInstall
+      root="$out/share/pi-observational-memory"
+      mkdir -p "$root"
+      cp -R src agent package.json LICENSE "$root/"
+      chmod -R u+w "$root"
+      substituteInPlace "$root/src/index.ts" \
+        --replace-fail '		const branch = ctx.sessionManager.getBranch() as Entry[];
+		runtime.enabled = readGateFromLedger(branch);
+		if (runtime.enabled) runtime.memoryRoot = ensureSessionMemory(ctx);' '		const branch = ctx.sessionManager.getBranch() as Entry[];
+		runtime.enabled = readGateFromLedger(branch);
+		if (branch.every((entry) => entry.type === "model_change" || entry.type === "thinking_level_change")) {
+			runtime.enabled = true;
+			pi.appendEntry(OM_ENABLED, { enabled: true });
+		}
+		if (runtime.enabled) runtime.memoryRoot = ensureSessionMemory(ctx);'
+      substituteInPlace "$root/src/config.ts" \
+        --replace-fail 'provider: "openrouter", id: "z-ai/glm-5.3"' 'provider: "openai-codex", id: "gpt-6.1-sol"' \
+        --replace-fail 'thinking: "medium"' 'thinking: "low"'
+      printf '%s\n' 'export { default } from "./src/index.ts";' > "$root/index.ts"
+      runHook postInstall
+    '';
+
+    doInstallCheck = true;
+    installCheckPhase = ''
+      test -f "$out/share/pi-observational-memory/index.ts"
+      test -f "$out/share/pi-observational-memory/src/spawn/launch.ts"
+      grep -q 'branch.every((entry) => entry.type === "model_change"' "$out/share/pi-observational-memory/src/index.ts"
+      grep -q 'return false;' "$out/share/pi-observational-memory/src/index.ts"
+      test "$(grep -c 'provider: "openai-codex", id: "gpt-6.1-sol", thinking: "low"' "$out/share/pi-observational-memory/src/config.ts")" -eq 2
+    '';
+
+    strictDeps = true;
+    meta = {
+      description = "Pinned observational memory extension for Pi";
+      homepage = "https://github.com/amosblomqvist/pi-observational-memory";
+      license = lib.licenses.mit;
+      platforms = [ "aarch64-darwin" ];
+    };
+  };
+
+  interactiveSubagents = pkgs.stdenvNoCC.mkDerivation {
+    pname = "pi-herdr-interactive-subagents";
+    version = "3.7.2-herdr.1";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "amosblomqvist";
+      repo = "pi-interactive-subagents";
+      rev = "c3e8b53c0754ae5ccc19fdab5a7481ec039bc2f7";
+      hash = "sha256-CuHDL6JV1VZoYIe+P/hk9qGMK71GGF7QRHEohsPKA2s=";
+    };
+
+    installPhase = ''
+      runHook preInstall
+      root="$out/share/pi-herdr-interactive-subagents"
+      mkdir -p "$root"
+      cp -R pi-extension LICENSE config.json.example "$root/"
+      chmod -R u+w "$root"
+      index="$root/pi-extension/subagents/index.ts"
+      done="$root/pi-extension/subagents/subagent-done.ts"
+      status="$root/pi-extension/subagents/status.ts"
+      substituteInPlace "$status" \
+        --replace-fail 'join(dirname(fileURLToPath(import.meta.url)), "../..")' 'dirname(fileURLToPath(import.meta.url))'
+      substituteInPlace "$index" "$done" \
+        --replace-fail '@mariozechner/pi-coding-agent' '@earendil-works/pi-coding-agent' \
+        --replace-fail '@mariozechner/pi-tui' '@earendil-works/pi-tui' \
+        --replace-fail '@sinclair/typebox' 'typebox' \
+        --replace-fail 'subagent_message' 'herdr_subagent_message'
+      substituteInPlace "$index" \
+        --replace-fail 'from "./tmux.ts"' 'from "./herdr.ts"' \
+        --replace-fail 'subagents_list' 'herdr_subagents_list' \
+        --replace-fail '"subagent",' '"herdr_subagent",' \
+        --replace-fail 'pi.registerCommand("herdr_subagent"' 'pi.registerCommand("herdr-subagent"' \
+        --replace-fail 'Use subagent with' 'Use herdr_subagent with' \
+        --replace-fail '/subagent <agent>' '/herdr-subagent <agent>' \
+        --replace-fail 'Subagents require tmux.' 'Subagents require Herdr.' \
+        --replace-fail 'tmux not available' 'Herdr not available' \
+        --replace-fail 'via tmux:' 'via Herdr:' \
+        --replace-fail 'web-search", "index.ts"' 'web-search.ts"' \
+        --replace-fail 'join(SUBAGENTS_DIR, "../../agents")' 'join(SUBAGENTS_DIR, "agents")'
+      ${pkgs.python3}/bin/python3 ${./interactive-subagents/patch-index.py} "$index"
+      cp ${./interactive-subagents/herdr.ts} "$root/pi-extension/subagents/herdr.ts"
+      cp config.json.example "$root/pi-extension/subagents/config.json.example"
+      rm "$root/pi-extension/subagents/tmux.ts"
+      mkdir -p "$root/pi-extension/subagents/agents"
+      cp ${./interactive-subagents/agents}/*.md "$root/pi-extension/subagents/agents/"
+      runHook postInstall
+    '';
+
+    doInstallCheck = true;
+    installCheckPhase = ''
+      test -f "$out/share/pi-herdr-interactive-subagents/pi-extension/subagents/herdr.ts"
+      grep -q 'name: "herdr_subagent"' "$out/share/pi-herdr-interactive-subagents/pi-extension/subagents/index.ts"
+      ! grep -q 'from "./tmux.ts"' "$out/share/pi-herdr-interactive-subagents/pi-extension/subagents/index.ts"
+    '';
+
+    meta = {
+      description = "Pinned interactive Pi subagents adapted for Herdr panes";
+      homepage = "https://github.com/amosblomqvist/pi-interactive-subagents";
+      license = lib.licenses.mit;
+      platforms = [ "aarch64-darwin" ];
+    };
   };
 
   treehouse = mkReleaseBinary {
@@ -396,6 +511,8 @@ in
     pi
     firstmate
     herdr
+    interactiveSubagents
+    observationalMemory
     treehouse
     ;
   agent-browser = pkgs.agent-browser;

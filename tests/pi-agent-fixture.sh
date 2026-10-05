@@ -27,7 +27,7 @@ pi_path=$(nix build --impure --no-link --print-out-paths \
 
 [ -x "$pi_path/bin/pi" ] || fail "pakiet PI nie udostępnia wykonywalnej binarki pi"
 pi_version=$("$pi_path/bin/pi" --version 2>&1) || fail "pi --version zakończyło się błędem"
-[ -n "$pi_version" ] || fail "pi --version zwróciło pusty wynik"
+[ "$pi_version" = "1.0.2" ] || fail "oczekiwano Pi 1.0.2, otrzymano: $pi_version"
 
 managed_agents_path=$(nix eval --impure --raw --no-update-lock-file --no-write-lock-file \
   --expr '
@@ -51,32 +51,132 @@ grep -Fq "prefer quality, simplicity, robustness, scalability, and long-term mai
 grep -Fq "always start by reproducing the bug in an end-to-end setting" "$agents_path" \
   || fail "globalny plik AGENTS.md PI nie zawiera zasad reprodukcji błędów"
 
-managed_auto_compaction_path=$(nix eval --impure --raw --no-update-lock-file --no-write-lock-file \
+if nix eval --impure --json --no-update-lock-file --no-write-lock-file \
   --expr '
     let
       flake = builtins.getFlake "path:'"$repo_root"'";
       profileUser = builtins.getEnv "DOTFILES_USER";
-      extension = flake.darwinConfigurations.macos.config.home-manager.users.${profileUser}.home.file.".pi/agent/extensions/auto-compaction.ts";
+      files = flake.darwinConfigurations.macos.config.home-manager.users.${profileUser}.home.file;
     in
-      toString extension.source
-  ') || fail "Home Manager nie udostępnia rozszerzenia automatycznej kompaktacji PI"
+      builtins.hasAttr ".pi/agent/extensions/auto-compaction.ts" files
+  ' | grep -q true; then
+  fail "Home Manager still registers the replaced auto-compaction extension"
+fi
 
-case "$managed_auto_compaction_path" in
-  */home/pi/extensions/auto-compaction.ts) ;;
-  *) fail "Home Manager wskazuje nieprawidłowe źródło rozszerzenia automatycznej kompaktacji PI" ;;
-esac
+observational_memory=$(nix build --impure --no-link --print-out-paths \
+  --no-update-lock-file --no-write-lock-file \
+  --expr '
+    let
+      flake = builtins.getFlake "path:'"$repo_root"'";
+      pkgs = flake.darwinConfigurations.macos.pkgs;
+    in
+      (import '"$repo_root"'/packages/agents { inherit pkgs; }).observationalMemory
+  ') || fail "Cannot build pinned observational-memory package"
+observational_memory_path="$observational_memory/share/pi-observational-memory"
+managed_observational_memory_path=$(nix eval --impure --raw --no-update-lock-file --no-write-lock-file \
+  --expr '
+    let
+      flake = builtins.getFlake "path:'"$repo_root"'";
+      profileUser = builtins.getEnv "DOTFILES_USER";
+    in
+      toString flake.darwinConfigurations.macos.config.home-manager.users.${profileUser}.home.file.".pi/agent/extensions/observational-memory".source
+  ') || fail "Home Manager does not register observational-memory"
+[ "$managed_observational_memory_path" = "$observational_memory_path" ] \
+  || fail "Home Manager does not point at the pinned observational-memory package"
+[ -f "$observational_memory_path/index.ts" ] || fail "observational-memory root entrypoint is missing"
+[ -f "$observational_memory_path/src/spawn/launch.ts" ] || fail "observational-memory spawn layout is missing"
+[ "$(grep -c 'provider: "openai-codex", id: "gpt-6.1-sol", thinking: "low"' "$observational_memory_path/src/config.ts")" -eq 2 ] \
+  || fail "observational-memory observer and consolidator must default to GPT-6.1 Sol / low"
 
-auto_compaction_path="$repo_root/home/pi/extensions/auto-compaction.ts"
-[ -f "$auto_compaction_path" ] || fail "źródło rozszerzenia automatycznej kompaktacji PI nie istnieje"
-grep -Fq "COMPACTION_THRESHOLD_PERCENT = 80" "$auto_compaction_path" \
-  || fail "rozszerzenie automatycznej kompaktacji PI nie używa progu 80%"
-grep -Fq "detailed, standalone handoff checkpoint" "$auto_compaction_path" \
-  || fail "rozszerzenie automatycznej kompaktacji PI nie wymaga kompletnego podsumowania przekazania"
-
-PI_OFFLINE=1 "$pi_path/bin/pi" \
-  --no-extensions --extension "$auto_compaction_path" \
+om_rpc=$(printf '%s\n' '{"type":"get_commands"}' | PI_OFFLINE=1 "$pi_path/bin/pi" \
+  --no-extensions --extension "$observational_memory_path/index.ts" \
   --no-skills --no-prompt-templates --no-themes --no-context-files \
-  --list-models >/dev/null || fail "PI nie ładuje zarządzanych rozszerzeń"
+  --mode rpc --no-session) || fail "Pi cannot load observational-memory in RPC mode"
+printf '%s\n' "$om_rpc" | grep -Fq '"name":"om"' \
+  || fail "observational-memory did not register /om"
+printf '%s\n' "$om_rpc" | grep -Fq '"name":"om:status"' \
+  || fail "observational-memory did not register /om:status"
+
+python3 - "$pi_path/bin/pi" "$observational_memory_path/index.ts" <<'PY' || fail "observational-memory session gate RPC integration failed"
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+pi, extension = sys.argv[1:]
+with tempfile.TemporaryDirectory(prefix="pi-om-gate.") as fixture:
+    env = dict(os.environ, HOME=fixture, XDG_DATA_HOME=os.path.join(fixture, "data"), PI_OFFLINE="1")
+    process = subprocess.Popen(
+        [pi, "--no-extensions", "--extension", extension, "--no-skills", "--no-prompt-templates",
+         "--no-themes", "--no-context-files", "--mode", "rpc", "--session-dir", os.path.join(fixture, "sessions")],
+        cwd=fixture, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True,
+    )
+    def command(request_id, kind, **fields):
+        process.stdin.write(json.dumps(dict(id=request_id, type=kind, **fields)) + "\n")
+        process.stdin.flush()
+        while True:
+            line = process.stdout.readline()
+            if not line:
+                raise RuntimeError("Pi RPC exited before response")
+            record = json.loads(line)
+            if record.get("id") == request_id and record.get("type") == "response":
+                if not record.get("success"):
+                    raise RuntimeError(record)
+                return record
+    def gate():
+        entries = command("entries", "get_entries")["data"]["entries"]
+        markers = [entry for entry in entries if entry.get("customType") == "om.enabled"]
+        if not markers:
+            raise RuntimeError("missing persisted OM gate marker")
+        return markers[-1].get("data", {}).get("enabled")
+    try:
+        if gate() is not True:
+            raise RuntimeError("empty startup session did not persist OM enabled")
+        command("status", "prompt", message="/om:status")
+        command("off", "prompt", message="/om off")
+        if gate() is not False:
+            raise RuntimeError("/om off did not persist disabled state")
+        command("new", "new_session")
+        if gate() is not True:
+            raise RuntimeError("/new did not enable and persist OM")
+    finally:
+        process.stdin.close()
+        process.wait(timeout=15)
+PY
+
+herdr_extension=$(nix build --impure --no-link --print-out-paths \
+  --no-update-lock-file --no-write-lock-file \
+  --expr '
+    let
+      flake = builtins.getFlake "path:'"$repo_root"'";
+      pkgs = flake.darwinConfigurations.macos.pkgs;
+    in
+      (import '"$repo_root"'/packages/agents { inherit pkgs; }).interactiveSubagents
+  ') || fail "Nie można zbudować portu subagentów Herdr"
+herdr_extension_path="$herdr_extension/share/pi-herdr-interactive-subagents/pi-extension/subagents"
+for role in scout researcher worker; do
+  grep -Fxq 'model: openai-codex/gpt-6.1-sol' "$herdr_extension_path/agents/$role.md" \
+    || fail "$role must default to GPT-6.1 Sol"
+  grep -Fxq 'thinking: low' "$herdr_extension_path/agents/$role.md" \
+    || fail "$role must default to low reasoning"
+done
+managed_herdr_extension_path=$(nix eval --impure --raw --no-update-lock-file --no-write-lock-file \
+  --expr '
+    let
+      flake = builtins.getFlake "path:'"$repo_root"'";
+      profileUser = builtins.getEnv "DOTFILES_USER";
+    in
+      toString flake.darwinConfigurations.macos.config.home-manager.users.${profileUser}.home.file.".pi/agent/extensions/herdr-interactive-subagents".source
+  ') || fail "Home Manager nie udostępnia rozszerzenia Herdr"
+[ "$managed_herdr_extension_path" = "$herdr_extension_path" ] \
+  || fail "Home Manager nie wskazuje przypiętej wersji rozszerzenia Herdr"
+herdr_rpc=$(printf '%s\n' '{"type":"get_commands"}' | PI_OFFLINE=1 "$pi_path/bin/pi" \
+  --no-extensions --extension "$herdr_extension_path/index.ts" \
+  --no-skills --no-prompt-templates --no-themes --no-context-files \
+  --mode rpc --no-session) || fail "PI nie ładuje portu Herdr w trybie RPC"
+printf '%s\n' "$herdr_rpc" | grep -Fq '"name":"herdr-subagent"' \
+  || fail "PI nie rejestruje komendy interaktywnych subagentów Herdr"
 
 firstmate_launcher=$(nix build --impure --no-link --print-out-paths \
   --no-update-lock-file --no-write-lock-file \
