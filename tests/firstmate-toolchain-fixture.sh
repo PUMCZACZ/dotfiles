@@ -37,7 +37,7 @@ build_package() {
     "$flake_ref#$1"
 }
 
-expected='pi-coding-agent	1.0.2
+expected='pi-coding-agent	1.5.0
 firstmate-snapshot	76355e20b4f44d968ca43c14e1bb21c100ac90d7
 herdr	0.8.0
 pi-observational-memory	78a1efcfdd46332253fb289724f05b26dfc7769e

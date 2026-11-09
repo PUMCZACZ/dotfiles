@@ -27,7 +27,23 @@ pi_path=$(nix build --impure --no-link --print-out-paths \
 
 [ -x "$pi_path/bin/pi" ] || fail "pakiet PI nie udostępnia wykonywalnej binarki pi"
 pi_version=$("$pi_path/bin/pi" --version 2>&1) || fail "pi --version zakończyło się błędem"
-[ "$pi_version" = "1.0.2" ] || fail "oczekiwano Pi 1.0.2, otrzymano: $pi_version"
+[ "$pi_version" = "1.5.0" ] || fail "oczekiwano Pi 1.5.0, otrzymano: $pi_version"
+
+codex_path=$(nix build --impure --no-link --print-out-paths \
+  --no-update-lock-file --no-write-lock-file \
+  --expr '
+    let
+      flake = builtins.getFlake "path:'"$repo_root"'";
+      profileUser = builtins.getEnv "DOTFILES_USER";
+      packages = flake.darwinConfigurations.macos.config.home-manager.users.${profileUser}.home.packages;
+      matches = builtins.filter (package: (package.pname or "") == "codex") packages;
+    in
+      if builtins.length matches == 1
+      then builtins.head matches
+      else throw "Home Manager must declare exactly one codex package"
+  ') || fail "Home Manager nie udostępnia dokładnie jednego pakietu codex"
+codex_version=$("$codex_path/bin/codex" --version) || fail "codex --version zakończyło się błędem"
+[ "$codex_version" = "codex-cli 0.167.0" ] || fail "oczekiwano Codex 0.167.0, otrzymano: $codex_version"
 
 managed_agents_path=$(nix eval --impure --raw --no-update-lock-file --no-write-lock-file \
   --expr '

@@ -131,8 +131,8 @@ Jedno narzędzie ma jednego właściciela. Nie wolno instalować tej samej binar
 | Ustawienia macOS | nix-darwin | Dock, Finder, klawiatura, trackpad |
 | Aplikacje GUI | Homebrew casks | WezTerm, Ghostty podczas migracji, fonty |
 | Pakiety macOS bez dobrego odpowiednika Nix | Homebrew formulae | wyjątki potwierdzone podczas implementacji |
-| Codex CLI | oficjalny instalator OpenAI | binarka i aktualizacja; konfiguracja może być wersjonowana osobno |
-| Pi | oficjalny pakiet npm Pi | binarka; konfiguracja autorska w repo |
+| Codex CLI | Nix/Home Manager | przypięta binarka z oficjalnego wydania OpenAI; auth i sesje pozostają lokalne |
+| Pi | Nix/Home Manager | przypięta binarka z oficjalnego wydania Pi; konfiguracja autorska w repo |
 | Sekrety i sesje | właściciel aplikacji / Keychain | auth Codex, auth Pi, SSH, tokeny |
 | Wersje projektowe SDK | repo danego projektu | `global.json`, pliki Node, Docker Compose, dev shell |
 
@@ -250,16 +250,16 @@ Konfiguracja i `lazy-lock.json` są w Git. Rollback generacji przywraca konfigur
 
 ### Codex
 
-- Binarka pozostaje instalowana i aktualizowana oficjalnym instalatorem OpenAI.
+- Nix/Home Manager instaluje Codex CLI 0.167.0 z oficjalnego wydania OpenAI, z przypiętym SHA-256 w `packages/agents/default.nix`.
 - Konfiguracja nie wymusza trybu pełnej autonomii.
 - Globalny `AGENTS.md` zawiera wyłącznie nasze świadome reguły.
 - Auth, pamięci, sesje, cache, pluginy zewnętrzne i dane runtime nie trafiają do publicznego repo.
 - Pierwsze uruchomienie wymaga ręcznego logowania.
 
-Oficjalna komenda instalacji i aktualizacji:
+Budowanie przypiętej wersji bez aktywacji:
 
 ```sh
-curl -fsSL https://chatgpt.com/codex/install.sh | sh
+nix build --no-link path:.#codex
 ```
 
 ### Claude
@@ -271,17 +271,17 @@ curl -fsSL https://chatgpt.com/codex/install.sh | sh
 ### Pi
 
 - Pi jest częścią pierwszego wydania i można go uruchomić komendą `pi`.
-- Instalacja korzysta z oficjalnego pakietu i wyłącza lifecycle scripts npm.
+- Instalacja korzysta z oficjalnego archiwum wydania Pi 1.5.0, z przypiętym SHA-256 w `packages/agents/default.nix`.
 - Uwierzytelnienie wykonuje użytkownik przez `/login`.
 - `~/.pi/agent/auth.json`, sesje, cache, pobrane paczki i dane runtime nie trafiają do Git.
 - Repo może zarządzać autorskim motywem, `settings.json`, `models.json` i później własnymi rozszerzeniami.
 - Pierwsze wydanie nie instaluje `pi-openai-server-compaction`, `pi-web-access`, fast mode ani innych paczek wykonujących kod.
 - Rozszerzenia są później dodawane pojedynczo po przeglądzie źródła i przypięciu wersji.
 
-Oficjalna komenda instalacji:
+Budowanie przypiętej wersji bez aktywacji:
 
 ```sh
-npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+nix build --no-link path:.#pi
 ```
 
 Pierwsze uruchomienie:
@@ -425,11 +425,10 @@ Aktualizuje pluginy, zapisuje zmianę `lazy-lock.json`, uruchamia headless smoke
 
 ### Agenci
 
-```sh
-./scripts/update.sh agents
-```
-
-Aktualizuje Codex oraz Pi ich oficjalnymi ścieżkami po osobnym potwierdzeniu. Nie modyfikuje auth, sesji ani konfiguracji projektowej.
+Wersje Codexa i Pi oraz sumy SHA-256 są przypięte w `packages/agents/default.nix`.
+Po ich zmianie należy zaktualizować inventory Pi i testy, uruchomić
+`./tests/pi-agent-fixture.sh`, a następnie osobno aktywować konfigurację przez
+`./rebuild.sh`. Aktualizacja nie modyfikuje auth, sesji ani konfiguracji projektowej.
 
 ### Reguła publikacji aktualizacji
 
