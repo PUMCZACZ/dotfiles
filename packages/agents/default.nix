@@ -9,6 +9,7 @@ let
       url,
       hash,
       binary ? pname,
+      sourceBinary ? binary,
       archive ? true,
       description,
       homepage,
@@ -24,7 +25,7 @@ let
       installPhase = ''
         runHook preInstall
         mkdir -p "$out/bin"
-        install -m 0755 ${if archive then binary else "$src"} "$out/bin/${binary}"
+        install -m 0755 ${if archive then sourceBinary else "$src"} "$out/bin/${binary}"
         runHook postInstall
       '';
 
@@ -41,13 +42,24 @@ let
       };
     };
 
+  codex = mkReleaseBinary {
+    pname = "codex";
+    version = "0.167.0";
+    url = "https://github.com/openai/codex/releases/download/rust-v0.167.0/codex-aarch64-apple-darwin.tar.gz";
+    hash = "sha256-SyKiqXG+J5HD4x+RLz53qI69ZKZYEqconMumXdZCX+k=";
+    sourceBinary = "codex-aarch64-apple-darwin";
+    description = "OpenAI coding agent for the terminal";
+    homepage = "https://github.com/openai/codex";
+    license = lib.licenses.asl20;
+  };
+
   pi = pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
     pname = "pi-coding-agent";
-    version = "1.0.2";
+    version = "1.5.0";
 
     src = pkgs.fetchurl {
       url = "https://github.com/earendil-works/pi/releases/download/v${finalAttrs.version}/pi-darwin-arm64.tar.gz";
-      hash = "sha256-wvA16krbqHkW8AXJlRXjyRZ0sR0WunXZXQiB5Hgao7s=";
+      hash = "sha256-qb8NgtWNKn0zf0rkFxtfyev/5CUJUnqDE2TEtlrfLN8=";
     };
 
     nativeBuildInputs = [ pkgs.makeWrapper ];
@@ -508,6 +520,7 @@ PY
 in
 {
   inherit
+    codex
     pi
     firstmate
     herdr

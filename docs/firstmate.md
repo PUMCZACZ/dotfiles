@@ -12,7 +12,7 @@ editing `packages/agents/` and validating the resulting diff.
 | Component | Version/revision | Owner and official source | Integrity lock | License |
 |---|---|---|---|---|
 | agent-browser | 0.27.0 | Nix; nixpkgs `agent-browser` | `flake.lock` | Apache-2.0 |
-| Pi | 1.0.2 | Nix; `earendil-works/pi` release | `sha256-wvA1…o7s=` | MIT |
+| Pi | 1.5.0 | Nix; `earendil-works/pi` release | `sha256-qb8N…LN8=` | MIT |
 | Observational memory (regular Pi only) | upstream `78a1efc` | Nix; `amosblomqvist/pi-observational-memory` + local startup/model defaults | `sha256-ieks…iW4=` | MIT |
 | Firstmate | `76355e20b4f44d968ca43c14e1bb21c100ac90d7` | Nix; `kunchenguid/firstmate` | `sha256-2WC0…P1A=` | MIT |
 | Herdr | 0.8.0, protocol 19 artifact | Nix; `herdrdev/herdr` release | `sha256-1Tqf…gXg=` | Apache-2.0 |
